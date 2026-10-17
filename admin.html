@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Админка · Составь Слово</title>
+<style>
+  body { font-family: sans-serif; background: #0a0e1a; color: #e8ecf5; padding: 20px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #2a3f6e; padding: 8px 12px; text-align: left; }
+  th { background: #1a2f5e; }
+  h1 { color: #f5c842; }
+  button { padding: 10px 20px; background: #f5c842; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+</style>
+</head>
+<body>
+  <h1>Админ-панель</h1>
+  <button onclick="loadStats()">Обновить данные</button>
+  <div id="table-container"></div>
+
+  <script>
+    async function loadStats() {
+      const res = await fetch('/api/stats');
+      const data = await res.json();
+      let html = '<table><tr><th>ID</th><th>Игрок</th><th>Слово</th><th>Счёт</th><th>Результат</th><th>Время</th></tr>';
+      data.forEach(row => {
+        html += `<tr>
+          <td>${row.id}</td>
+          <td>${row.player_name}</td>
+          <td>${row.word}</td>
+          <td>${row.score}</td>
+          <td>${row.result}</td>
+          <td>${row.played_at}</td>
+        </tr>`;
+      });
+      html += '</table>';
+      document.getElementById('table-container').innerHTML = html;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Составь Слово</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(ellipse at top, #1a2f5e 0%, #0a0e1a 60%);
+    min-height: 100vh; color: #e8ecf5;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+  .screen { width: 100%; max-width: 720px; position: relative; z-index: 1; }
+
+  .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .stars span {
+    position: absolute; display: block; width: 2px; height: 2px; border-radius: 50%;
+    background: #ffd85c; opacity: .5; animation: twinkle 3s infinite ease-in-out;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: .15; transform: scale(1); }
+    50%      { opacity: .8;  transform: scale(1.6); }
+  }
+
+  h1, h2 { font-family: Georgia, serif; letter-spacing: 1px; }
+  h1 {
+    font-size: 2.6rem; margin: 0 0 10px;
+    background: linear-gradient(135deg, #ffe58a 0%, #ffd85c 40%, #f5a623 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-align: center;
+    animation: glow 3s ease-in-out infinite;
+  }
+  @keyframes glow {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(245,200,66,.35)); }
+    50%      { filter: drop-shadow(0 0 22px rgba(245,200,66,.65)); }
+  }
+
+  .intro-card {
+    position: relative;
+    background: linear-gradient(180deg, rgba(30,45,80,.78), rgba(15,22,40,.92));
+    border: 1px solid rgba(245,200,66,.22);
+    border-radius: 22px;
+    padding: 36px 32px 32px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.03) inset;
+    overflow: hidden;
+    animation: fadeUp .6s ease both;
+  }
+  .intro-card::before {
+    content: '';
+    position: absolute; top: -120px; left: 50%; transform: translateX(-50%);
+    width: 420px; height: 260px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(245,200,66,.18), transparent 65%);
+    pointer-events: none;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .intro-icon {
+    width: 74px; height: 74px; margin: 0 auto 18px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.1rem;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(245,200,66,.18), rgba(245,200,66,.04));
+    border: 1px solid rgba(245,200,66,.35);
+    box-shadow: 0 8px 24px rgba(245,200,66,.15);
+    animation: float 4s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+  }
+
+  .intro-text {
+    text-align: center; color: #c5cfe0; line-height: 1.65;
+    font-size: 1rem; margin: 0 auto 6px; max-width: 460px;
+  }
+  .intro-text strong { color: #ffd85c; font-weight: 700; }
+
+  .filters {
+    max-width: 480px; margin: 0 auto 22px;
+    display: grid; gap: 14px;
+  }
+  .filter-group .label {
+    font-size: .78rem; letter-spacing: 2px; text-transform: uppercase;
+    color: #8d9bb5; margin-bottom: 8px; text-align: center;
+  }
+  .segmented {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0;
+    background: rgba(0,0,0,.28);
+    border: 1px solid rgba(245,200,66,.18);
+    border-radius: 12px;
+    padding: 5px;
+  }
+  .segmented button {
+    background: transparent; border: none; color: #b9c6dd;
+    padding: 11px 8px; border-radius: 8px; cursor: pointer;
+    font-size: .9rem; font-weight: 600; letter-spacing: .3px;
+    transition: background .2s, color .2s, box-shadow .2s;
+    font-family: inherit;
+  }
+  .segmented button:hover { color: #ffd85c; }
+  .segmented button.active {
+    background: linear-gradient(135deg, #f5c842, #d4a017);
+    color: #1a1a1a;
+    box-shadow: 0 4px 14px rgba(245,200,66,.35);
+  }
+
+  .btn {
+    display: block; width: 100%; padding: 16px; margin-top: 12px;
+    background: linear-gradient(135deg, #f5c842, #d4a017);
+    color: #1a1a1a; border: none; border-radius: 12px;
+    font-size: 1.05rem; font-weight: 700; letter-spacing: .5px;
+    cursor: pointer; transition: transform .12s, box-shadow .25s, filter .2s;
+    box-shadow: 0 6px 20px rgba(245,200,66,.22);
+  }
+  .btn:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 10px 28px rgba(245,200,66,.4);
+    transform: translateY(-1px);
+  }
+  .btn:active { transform: scale(.98); }
+
+  .btn.secondary {
+    background: transparent;
+    border: 2px solid rgba(245,200,66,.35);
+    color: #f5c842;
+    box-shadow: none;
+  }
+  .btn.secondary:hover {
+    background: rgba(245,200,66,.1);
+    box-shadow: 0 0 22px rgba(245,200,66,.18);
+  }
+
+  .card {
+    background: linear-gradient(180deg, rgba(30,45,80,.7), rgba(15,22,40,.9));
+    border: 1px solid rgba(245,200,66,.2);
+    border-radius: 16px; padding: 28px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.4);
+  }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; font-size: .9rem; color: #9baac7;
+  }
+  .timer {
+    font-family: 'Courier New', monospace; font-size: 1.4rem;
+    font-weight: 700; color: #f5c842;
+  }
+  .timer.danger { color: #ff5555; animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .4; } }
+  .progress-dots {
+    display: flex; gap: 6px; justify-content: center;
+    margin-bottom: 24px; flex-wrap: wrap;
+  }
+  .dot {
+    width: 32px; height: 42px; border-radius: 8px;
+    background: rgba(255,255,255,.04);
+    border: 2px solid rgba(245,200,66,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-family: Georgia, serif; font-size: 1.2rem;
+    color: #4a5570; transition: all .25s;
+  }
+  .dot.active {
+    border-color: #f5c842; color: #f5c842;
+    box-shadow: 0 0 14px rgba(245,200,66,.5);
+  }
+  .dot.done { background: rgba(74,222,128,.15); border-color: #4ade80; color: #4ade80; }
+  .dot.wrong { background: rgba(220,50,50,.15); border-color: #ff5555; color: #ff8888; }
+  .question-box {
+    text-align: center; padding: 24px 16px; margin-bottom: 20px;
+    background: rgba(0,0,0,.2); border-radius: 12px; min-height: 110px;
+    display: flex; flex-direction: column; justify-content: center; gap: 12px;
+  }
+  .question-letter { color: #f5c842; font-family: Georgia, serif; font-size: 1rem; letter-spacing: 3px; }
+  .question-text { font-size: 1.15rem; line-height: 1.5; }
+  .input-row { display: flex; gap: 10px; }
+  input[type="text"] {
+    flex: 1; padding: 14px 16px; border-radius: 10px;
+    border: 2px solid rgba(245,200,66,.25);
+    background: rgba(0,0,0,.3); color: #fff;
+    font-size: 1.1rem; outline: none;
+    letter-spacing: 1px;
+  }
+  input[type="text"]:focus { border-color: #f5c842; }
+  .input-row .btn { margin-top: 0; width: auto; padding: 14px 24px; }
+  .result-word {
+    text-align: center; font-family: Georgia, serif; font-size: 3rem;
+    letter-spacing: 8px; margin: 20px 0; color: #f5c842;
+    text-shadow: 0 0 20px rgba(245,200,66,.4);
+  }
+  .result-word.fail { color: #ff7777; text-shadow: 0 0 20px rgba(255,80,80,.4); }
+  .answer-row {
+    display: flex; align-items: flex-start;
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 6px;
+    background: rgba(0,0,0,.2); font-size: .92rem;
+  }
+  .answer-row .letter {
+    font-family: Georgia, serif; font-weight: 700;
+    color: #f5c842; min-width: 26px;
+  }
+  .answer-row .q { flex: 1; margin: 0 12px; color: #c5cfe0; line-height: 1.4; }
+  .answer-row .a { font-weight: 700; text-align: right; }
+  .answer-row.correct .a { color: #4ade80; }
+  .answer-row.incorrect .a { color: #ff7777; }
+  .answer-row .you { color: #8d9bb5; font-size: .8rem; font-weight: 400; display: block; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+
+<div class="screen">
+
+  <div id="screen-intro">
+    <h1>СОСТАВЬ СЛОВО</h1>
+    <div class="intro-card">
+      <div class="intro-icon">🧩</div>
+      <p class="intro-text">
+        Угадай зашифрованное слово по <strong>первым буквам</strong> ответов на вопросы.
+        Каждая буква итогового слова — начало ответа на отдельный вопрос.
+      </p>
+
+      <div class="filters">
+        <div class="filter-group">
+          <div class="label">Длина слова</div>
+          <div class="segmented" id="len-group">
+            <button type="button" data-len="short" class="active">до 8 букв</button>
+            <button type="button" data-len="long">больше 8 букв</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="label">Уровень вопросов</div>
+          <div class="segmented" id="lvl-group">
+            <button type="button" data-lvl="medium" class="active">Средний</button>
+            <button type="button" data-lvl="hard">Сложный</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <div class="label">Порядок букв</div>
+          <div class="segmented" id="ord-group">
+            <button type="button" data-ord="seq" class="active">По порядку</button>
+            <button type="button" data-ord="rand">Вперемешку</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn" type="button" onclick="startRandom()">🎲 Случайное слово</button>
+      <button class="btn secondary" type="button" onclick="openRules()">📖 Как играть</button>
+    </div>
+  </div>
+
+  <div id="screen-game" class="hidden">
+    <div class="card">
+      <div class="topbar">
+        <div>Вопрос <span id="q-num">1</span> / <span id="q-total">9</span></div>
+        <div class="timer" id="timer">--:--</div>
+      </div>
+      <div class="progress-dots" id="progress-dots"></div>
+      <div class="question-box">
+        <div class="question-letter">ВОПРОС</div>
+        <div class="question-text" id="question-text">Загрузка…</div>
+      </div>
+      <form class="input-row" onsubmit="handleSubmit(event)">
+        <input type="text" id="answer-input" placeholder="Твой ответ…" autocomplete="off" autofocus>
+        <button class="btn" type="submit">→</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="screen-result" class="hidden">
+    <div class="card">
+      <h2 style="text-align:center;margin-top:0;" id="result-title">Результат</h2>
+      <div class="result-word" id="result-word">---</div>
+      <div id="result-details" style="margin-bottom:20px;"></div>
+      <button class="btn" type="button" onclick="location.reload()">Играть снова</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- Шаблон окна с правилами -->
+<template id="rules-template">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Как играть · Составь Слово</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: radial-gradient(ellipse at top, #1a2f5e 0%, #0a0e1a 60%);
+      min-height: 100vh; color: #e8ecf5;
+      padding: 24px;
+      line-height: 1.65;
+    }
+    .wrap { max-width: 680px; margin: 0 auto; }
+    h1 {
+      font-family: Georgia, serif; letter-spacing: 1px;
+      font-size: 2rem; margin: 0 0 20px;
+      background: linear-gradient(135deg, #ffd85c, #f5a623);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+      text-align: center;
+    }
+    h2 { font-family: Georgia, serif; font-size: 1.15rem; color: #f5c842; margin: 26px 0 8px; }
+    p { margin: 0 0 12px; color: #d5deee; }
+    ol, ul { margin: 0 0 12px; padding-left: 22px; color: #d5deee; }
+    li { margin-bottom: 8px; }
+    .card {
+      background: linear-gradient(180deg, rgba(30,45,80,.7), rgba(15,22,40,.9));
+      border: 1px solid rgba(245,200,66,.2);
+      border-radius: 16px; padding: 26px 28px;
+      box-shadow: 0 10px 40px rgba(0,0,0,.4);
+    }
+    strong { color: #ffd85c; }
+    .close-btn {
+      display: block; width: 100%; padding: 14px; margin-top: 24px;
+      background: linear-gradient(135deg, #f5c842, #d4a017);
+      color: #1a1a1a; border: none; border-radius: 10px;
+      font-size: 1rem; font-weight: 700; letter-spacing: .5px;
+      cursor: pointer;
+    }
+    .close-btn:hover { filter: brightness(1.1); }
+  </style>
+  <div class="wrap">
+    <h1>Как играть</h1>
+    <div class="card">
+      <p>
+        <strong>«Составь Слово»</strong> — игра-головоломка, в которой нужно угадать
+        зашифрованное слово по первым буквам ответов на вопросы.
+        Каждая буква итогового слова — это начало ответа на отдельный вопрос.
+      </p>
+
+      <h2>Настройки перед стартом</h2>
+      <ul>
+        <li><strong>Длина слова:</strong> «до 8 букв» — короткие слова, «больше 8 букв» — длинные.</li>
+        <li><strong>Уровень вопросов:</strong> «Средний» — простые и знакомые вопросы, «Сложный» — термины из науки, истории и культуры.</li>
+        <li><strong>Порядок букв:</strong> «По порядку» — буквы открываются слева направо, «Вперемешку» — вопросы идут в случайном порядке (например 1, 5, 3, 4, 2), каждая буква спрашивается ровно один раз.</li>
+      </ul>
+
+      <h2>Ход игры</h2>
+      <ol>
+        <li>Выбери настройки и нажми <strong>«🎲 Случайное слово»</strong>.</li>
+        <li>Для каждой буквы появится вопрос. Введи ответ и нажми <strong>→</strong> или <strong>Enter</strong>.</li>
+        <li>Если ответ верный — буква открывается в прогресс-баре. Если нет — в слоте появится <strong>×</strong>, а игра перейдёт к следующему вопросу.</li>
+        <li>Когда все вопросы пройдены, игра покажет итоговое слово и разбор.</li>
+      </ol>
+
+      <h2>Правила</h2>
+      <ul>
+        <li><strong>Таймер.</strong> На каждую букву даётся 25 секунд. В последние 30 секунд таймер краснеет. Если время вышло — игра завершается.</li>
+        <li><strong>Без подсказок.</strong> До ввода ответа буква не показывается — ни в слоте, ни в вопросе.</li>
+        <li><strong>Допуск на опечатку.</strong> Ответ засчитывается, если отличается от правильного на одну букву (первая буква должна совпадать).</li>
+      </ul>
+
+      <button class="close-btn" onclick="window.close()">Понятно, закрыть</button>
+    </div>
+  </div>
+</template>
+
+<script>
+/* ─── Звёзды на фоне ─── */
+(function makeStars() {
+  const box = document.getElementById('stars');
+  const n = 70;
+  let html = '';
+  for (let i = 0; i < n; i++) {
+    const x = Math.random() * 100;
+    const y = Math.random() * 100;
+    const d = (Math.random() * 3 + 2).toFixed(2);
+    const delay = (Math.random() * 3).toFixed(2);
+    const size = Math.random() < .2 ? 3 : 2;
+    html += '<span style="left:' + x + '%;top:' + y + '%;width:' + size + 'px;height:' + size + 'px;animation-duration:' + d + 's;animation-delay:' + delay + 's"></span>';
+  }
+  box.innerHTML = html;
+})();
+
+/* ─────────────────── Банки вопросов ─────────────────── */
+const BANK_EASY = {
+  'А': [['АРБУЗ', 'Какая ягода может весить до 20 кг и краснеет изнутри?'], ['АВТОБУС', 'Городской транспорт, который ходит по расписанию?'], ['АКУЛА', 'Морская хищница с зубами в несколько рядов?'], ['АСТРОНОМ', 'Учёный, изучающий звёзды и планеты?'], ['АПТЕКА', 'Место, где продают лекарства?'], ['АЛЬБАТРОС', 'Морская птица с самым большим размахом крыльев?']],
+  'В': [['ВЕНЕРА', 'Вторая от Солнца планета, самая горячая в системе?'], ['ВУЛКАН', 'Гора, из которой может извергаться лава?'], ['ВОРОБЕЙ', 'Маленькая серая птичка, часто прыгает по дорожкам?'], ['ВИОЛОНЧЕЛЬ', 'Струнный инструмент, который держат между коленями?'], ['ВАЛЬС', 'Плавный танец в размере три четверти?']],
+  'Г': [['ГИТАРА', 'Шестиструнный музыкальный инструмент?'], ['ГИМАЛАИ', 'Самые высокие горы на Земле?'], ['ГЕПАРД', 'Самое быстрое сухопутное животное, пятнистый хищник?'], ['ГРАДУСНИК', 'Прибор для измерения температуры тела?']],
+  'Д': [['ДЕЛЬФИН', 'Умное морское млекопитающее, спасающее людей?'], ['ДУБ', 'Могучее дерево с желудями?'], ['ДИРИЖАБЛЬ', 'Летательный аппарат с большим баллоном газа?'], ['ДЖУНГЛИ', 'Густой тропический лес?']],
+  'Е': [['ЕЛЬ', 'Хвойное дерево, которое украшают на Новый год?'], ['ЕНОТ', 'Пушистый зверь, который любит полоскать еду в воде?'], ['ЕВРОПА', 'Часть света, где находится Париж?'], ['ЕГИПЕТ', 'Страна пирамид и фараонов?']],
+  'З': [['ЗЕБРА', 'Полосатая лошадь из Африки?'], ['ЗВЕЗДА', 'Светящийся газовый шар на ночном небе?'], ['ЗЕРКАЛО', 'Предмет, в котором видно своё отражение?'], ['ЗИМА', 'Самое холодное время года?']],
+  'И': [['ИГЛА', 'Острый предмет с ушком для шитья?'], ['ИВА', 'Дерево, которое растёт у воды и «плачет»?'], ['ИЗУМРУД', 'Драгоценный камень зелёного цвета?'], ['ИНДИЯ', 'Страна, где протекает Ганг и живёт больше всего людей?']],
+  'К': [['КОМПАС', 'Прибор, который всегда указывает на север?'], ['КЕНГУРУ', 'Австралийское животное с сумкой на животе?'], ['КНИГА', 'Источник знаний из бумажных страниц?'], ['КОСМОС', 'Бескрайнее пространство за пределами атмосферы?']],
+  'Л': [['ЛУНА', 'Единственный естественный спутник Земли?'], ['ЛЕОПАРД', 'Пятнистый хищник семейства кошачьих?'], ['ЛАМПА', 'Источник света в комнате?'], ['ЛИСТ', 'Зелёная часть растения, которая дышит?']],
+  'М': [['МАРС', 'Красная планета Солнечной системы?'], ['МЕДВЕДЬ', 'Крупный лесной зверь, который любит мёд?'], ['МОЛОКО', 'Белый напиток, который даёт корова?'], ['МЕТРО', 'Подземный городской транспорт?']],
+  'Н': [['НОС', 'Орган обоняния на лице?'], ['НЕПТУН', 'Самая дальняя планета Солнечной системы?'], ['НОЖНИЦЫ', 'Инструмент из двух лезвий для резки бумаги?'], ['НОТА', 'Знак для записи звука в музыке?']],
+  'О': [['ОКЕАН', 'Огромное водное пространство, больше моря?'], ['ОРЁЛ', 'Хищная птица, символ силы и власти?'], ['ОБЛАКО', 'Белое скопление в небе, из которого идёт дождь?'], ['ОГОНЬ', 'То, что горит и даёт тепло и свет?']],
+  'П': [['ПАРИЖ', 'Столица Франции, город Эйфелевой башни?'], ['ПИНГВИН', 'Птица, которая не летает, но отлично плавает?'], ['ПЛАНЕТА', 'Небесное тело, вращающееся вокруг звезды?'], ['ПЧЕЛА', 'Насекомое, которое делает мёд?']],
+  'Р': [['РАДУГА', 'Разноцветная дуга в небе после дождя?'], ['РОБОТ', 'Механизм, который выполняет работу за человека?'], ['РОССИЯ', 'Самая большая страна в мире?'], ['РОЗА', 'Цветок с шипами, символ любви?']],
+  'С': [['САТУРН', 'Планета с самыми заметными кольцами?'], ['СОБАКА', 'Домашний друг человека, который лает?'], ['САМОЛЁТ', 'Транспорт, который летает по небу?'], ['СНЕГ', 'Белые хлопья, которые падают зимой?']],
+  'Т': [['ТИГР', 'Полосатый хищник из семейства кошачьих?'], ['ТЕЛЕСКОП', 'Прибор для наблюдения за далёкими звёздами?'], ['ТУЧА', 'Тёмное облако, предвещающее дождь?'], ['ТОКИО', 'Столица Японии?']],
+  'Ц': [['ЦИРК', 'Место, где выступают клоуны и акробаты?'], ['ЦВЕТОК', 'Красивая часть растения с лепестками?'], ['ЦАПЛЯ', 'Болотная птица с длинными ногами и клювом?'], ['ЦЕЗАРЬ', 'Титул римских императоров?']],
+  'Э': [['ЭВЕРЕСТ', 'Самая высокая гора на Земле?'], ['ЭСКИМО', 'Мороженое на палочке в шоколаде?'], ['ЭЛЕКТРОН', 'Отрицательно заряженная частица атома?']],
+  'Ю': [['ЮПИТЕР', 'Самая большая планета Солнечной системы?'], ['ЮЛА', 'Игрушка, которая крутится на одной ножке?'], ['ЮРИСТ', 'Специалист по законам?'], ['ЮМОР', 'Способность видеть смешное?']],
+  'Я': [['ЯБЛОКО', 'Фрукт, который упал на голову Ньютону?'], ['ЯГУАР', 'Пятнистый хищник Южной Америки?'], ['ЯПОНИЯ', 'Островная страна восходящего солнца?'], ['ЯКОРЬ', 'Тяжёлая деталь, которая удерживает корабль на месте?']],
+};
+
+const BANK_HARD = {
+  'А': [['АТОМ', 'Мельчайшая частица химического элемента, сохраняющая его свойства?'], ['АРХЕОЛОГ', 'Учёный, который изучает прошлое по материальным находкам и раскопкам?'], ['АМПЕР', 'Единица силы электрического тока в системе СИ?'], ['АКРОПОЛЬ', 'Укреплённая верхняя часть древнегреческого города, символ Афин?'], ['АЛГЕБРА', 'Раздел математики, где вместо чисел используют буквенные обозначения?'], ['АНТАРКТИДА', 'Самый холодный материк Земли, покрытый ледяным щитом?'], ['АРТЕРИЯ', 'Кровеносный сосуд, несущий кровь от сердца к органам?'], ['АМФИТЕАТР', 'Античное сооружение с овальной ареной для зрелищ, как римский Колизей?']],
+  'Б': [['БАКТЕРИЯ', 'Одноклеточный организм без оформленного ядра, вызывающий многие болезни?'], ['БАРОМЕТР', 'Прибор для измерения атмосферного давления?'], ['БИОЛОГИЯ', 'Наука о живых организмах и их взаимодействии со средой?'], ['БУМЕРАНГ', 'Метательное оружие австралийских аборигенов, возвращающееся к бросавшему?'], ['БАСТИЛИЯ', 'Крепость-тюрьма в Париже, взятие которой в 1789 году стало началом революции?'], ['БИНОКЛЬ', 'Оптический прибор из двух труб для наблюдения за удалёнными объектами?']],
+  'В': [['ВЕКТОР', 'Направленный отрезок, характеризующийся величиной и направлением?'], ['ВУЛКАН', 'Геологическое образование, через которое магма выходит на поверхность?'], ['ВАКЦИНА', 'Препарат, формирующий иммунитет против инфекционного заболевания?'], ['ВАТТ', 'Единица измерения мощности в системе СИ?'], ['ВЕНЕРА', 'Планета Солнечной системы с самой плотной атмосферой и температурой выше 400 °C?']],
+  'Г': [['ГАЛАКТИКА', 'Огромная звёздная система, к которой относится и наш Млечный Путь?'], ['ГЕОМЕТРИЯ', 'Раздел математики, изучающий фигуры и их свойства?'], ['ГЕНОТИП', 'Совокупность всех генов организма?'], ['ГЛЮКОЗА', 'Простой сахар, основной источник энергии для клеток?'], ['ГЕЛИОЦЕНТРИЗМ', 'Модель мира, в центре которой находится Солнце, а не Земля?'], ['ГРАВИТАЦИЯ', 'Сила притяжения между телами, открытая Ньютоном?']],
+  'Д': [['ДИОД', 'Полупроводниковый прибор, пропускающий ток только в одном направлении?'], ['ДИНАМИКА', 'Раздел механики, изучающий движение тел под действием сил?'], ['ДЕМОКРАТИЯ', 'Форма правления, при которой власть принадлежит народу?'], ['ДНК', 'Молекула, хранящая наследственную информацию в клетке?'], ['ДИФФУЗИЯ', 'Взаимное проникновение молекул одного вещества в другое?'], ['ДЕКАРТ', 'Французский философ и математик, создатель аналитической геометрии?']],
+  'Е': [['ЕВКЛИД', 'Древнегреческий математик, автор «Начал» — основы геометрии?'], ['ЕВРАЗИЯ', 'Самый большой материк Земли, объединяющий Европу и Азию?'], ['ЕВАНГЕЛИЕ', 'Часть Библии, повествующая о жизни и учении Иисуса Христа?'], ['ЕГИПЕТ', 'Древняя цивилизация долины Нила, известная пирамидами и фараонами?'], ['ЕДИНИЦА', 'Наименьшее натуральное число?']],
+  'З': [['ЗАКОН', 'Общеобязательное правило, установленное государством?'], ['ЗВЕЗДА', 'Массивное светящееся небесное тело, в недрах которого идут термоядерные реакции?'], ['ЗАПОВЕДНИК', 'Особо охраняемая природная территория, где запрещена хозяйственная деятельность?'], ['ЗООЛОГИЯ', 'Наука о животных?'], ['ЗОЛОТО', 'Благородный металл, химический элемент Au?']],
+  'И': [['ИЗОТОП', 'Разновидность химического элемента с одинаковым зарядом ядра, но разной массой?'], ['ИМПУЛЬС', 'Векторная величина, равная произведению массы тела на его скорость?'], ['ИНЕРЦИЯ', 'Свойство тел сохранять состояние покоя или равномерного движения?'], ['ИНДУКЦИЯ', 'Явление возникновения тока в проводнике при изменении магнитного поля?'], ['ИНТЕГРАЛ', 'Одно из основных понятий математического анализа, обратное дифференциалу?'], ['ИМПЕРИЯ', 'Крупное государство, во главе которого стоит император?']],
+  'К': [['КАТАЛИЗ', 'Ускорение химической реакции под действием особого вещества?'], ['КВАЗАР', 'Активное ядро далёкой галактики, один из самых ярких объектов Вселенной?'], ['КИНЕТИКА', 'Раздел физики, изучающий движение тел без учёта причин, его вызывающих?'], ['КОНСТИТУЦИЯ', 'Основной закон государства, определяющий права и обязанности граждан?'], ['КОРРОЗИЯ', 'Разрушение металлов под действием окружающей среды?']],
+  'Л': [['ЛАЗЕР', 'Устройство, создающее узкий пучок когерентного света?'], ['ЛЕГЕНДА', 'Народное предание о событиях или героях, основанное на реальных фактах?'], ['ЛЕЙПЦИГ', 'Немецкий город, где в 1813 году произошло «сражение народов»?'], ['ЛИНЗА', 'Прозрачное тело, ограниченное сферическими поверхностями, преломляющее лучи?'], ['ЛИТОСФЕРА', 'Твёрдая внешняя оболочка Земли?']],
+  'М': [['МАГНИТ', 'Тело, обладающее свойством притягивать железные предметы?'], ['МАТРИЦА', 'Прямоугольная таблица чисел, над которой определены алгебраические операции?'], ['МЕХАНИКА', 'Раздел физики, изучающий движение тел и взаимодействия между ними?'], ['МИКРОСКОП', 'Оптический прибор для изучения объектов, невидимых невооружённым глазом?'], ['МИФОЛОГИЯ', 'Совокупность мифов, сказаний о богах и героях?']],
+  'Н': [['НЕЙТРОН', 'Нейтральная по заряду частица, входящая в состав ядра атома?'], ['НИВЕЛИР', 'Геодезический прибор для определения разности высот точек местности?'], ['НОБЕЛИЙ', 'Химический элемент, названный в честь учредителя знаменитой премии?'], ['НОРМАНДИЯ', 'Историческая область Франции, где в 1944 году высадился союзный десант?'], ['НУКЛЕОТИД', 'Мономер ДНК и РНК, состоящий из сахара, фосфата и азотистого основания?']],
+  'О': [['ОКСИД', 'Соединение химического элемента с кислородом?'], ['ОРБИТА', 'Путь, по которому движется небесное тело вокруг другого?'], ['ОСМОС', 'Одностороннее проникновение растворителя через полупроницаемую мембрану?'], ['ОПТИКА', 'Раздел физики, изучающий свет и его свойства?'], ['ОРФОГРАФИЯ', 'Система правил написания слов?'], ['ОКЕАНОЛОГИЯ', 'Наука о морях и океанах?']],
+  'П': [['ПАРАДИГМА', 'Система образцов и понятий, принятая в определённой области знания?'], ['ПАРАБОЛА', 'Кривая, являющаяся графиком квадратичной функции?'], ['ПАРАЗИТ', 'Организм, живущий за счёт другого и приносящий ему вред?'], ['ПЕРИОД', 'Промежуток времени между двумя повторяющимися событиями?'], ['ПЕРСПЕКТИВА', 'Способ изображения объёмных предметов на плоскости?']],
+  'Р': [['РАДИАЦИЯ', 'Поток частиц или электромагнитных волн, испускаемых веществом?'], ['РЕАКЦИЯ', 'Процесс превращения одних веществ в другие?'], ['РЕЗОНАНС', 'Резкое возрастание амплитуды колебаний при совпадении частот?'], ['РЕФЛЕКС', 'Ответная реакция организма на раздражение, осуществляемая нервной системой?'], ['РИБОСОМА', 'Органоид клетки, синтезирующий белки?']],
+  'С': [['СИНТЕЗ', 'Метод познания, соединение частей в целое?'], ['СПЕКТР', 'Совокупность цветных полос, получаемых при разложении света?'], ['СТАТИКА', 'Раздел механики, изучающий условия равновесия тел?'], ['СТЕРЕОМЕТРИЯ', 'Раздел геометрии, изучающий фигуры в пространстве?'], ['СУБЛИМАЦИЯ', 'Переход вещества из твёрдого состояния сразу в газообразное?'], ['СИМБИОЗ', 'Взаимовыгодное сожительство организмов разных видов?']],
+  'Т': [['ТЕОРЕМА', 'Утверждение, истинность которого доказывается путём рассуждений?'], ['ТЕРМОДИНАМИКА', 'Раздел физики, изучающий теплоту и превращения энергии?'], ['ТЕРМОМЕТР', 'Прибор для измерения температуры?'], ['ТЕЛЕСКОП', 'Оптический прибор для наблюдения за далёкими небесными телами?'], ['ТЕКТОНИКА', 'Раздел геологии, изучающий строение и движение земной коры?']],
+  'У': [['УСКОРЕНИЕ', 'Векторная величина, характеризующая быстроту изменения скорости?'], ['УРАН', 'Химический элемент с порядковым номером 92, используемый в ядерной энергетике?'], ['УТОПИЯ', 'Жанр литературы, описывающий идеальное, но неосуществимое общество?'], ['УРБАНИЗАЦИЯ', 'Процесс роста городов и увеличения доли городского населения?'], ['УЛЬТРАЗВУК', 'Механические колебания с частотой выше слышимого диапазона?']],
+  'Ф': [['ФОТОН', 'Квант электромагнитного излучения, частица света?'], ['ФЕРМЕНТ', 'Белковый катализатор биологических реакций?'], ['ФЕОДАЛИЗМ', 'Общественный строй с землевладельцами-феодалами и зависимыми крестьянами?'], ['ФИЗИКА', 'Наука о наиболее общих свойствах материи и формах её движения?'], ['ФОРМУЛА', 'Краткая запись математического или химического закона?']],
+  'Ц': [['ЦЕЗИЙ', 'Щелочной металл, используемый в атомных часах?'], ['ЦИТОПЛАЗМА', 'Внутреннее содержимое клетки без ядра?'], ['ЦИФРА', 'Знак для записи чисел?'], ['ЦЕНТР', 'Точка, равноудалённая от всех точек окружности?'], ['ЦЕПЬ', 'Замкнутый путь электрического тока?']],
+  'Э': [['ЭНЕРГИЯ', 'Физическая величина, характеризующая способность тела совершать работу?'], ['ЭВОЛЮЦИЯ', 'Постепенное развитие живых организмов и общества?'], ['ЭКОЛОГИЯ', 'Наука о взаимодействии организмов с окружающей средой?'], ['ЭЛЕКТРОН', 'Отрицательно заряженная частица, входящая в состав атома?'], ['ЭНТРОПИЯ', 'Мера неупорядоченности системы в термодинамике?']],
+  'Ю': [['ЮПИТЕР', 'Крупнейшая планета Солнечной системы, газовый гигант с Большим красным пятном?'], ['ЮСТИЦИЯ', 'Система правосудия и деятельность судебных органов?'], ['ЮРИСДИКЦИЯ', 'Право суда рассматривать определённые дела?'], ['ЮМОР', 'Способность замечать и выражать смешное?'], ['ЮВЕНИЛЬНЫЙ', 'Относящийся к юношескому возрасту, молодой?']],
+  'Я': [['ЯДРО', 'Центральная часть атома, содержащая протоны и нейтроны?'], ['ЯЗЫКОЗНАНИЕ', 'Наука о языке, его строении и развитии?'], ['ЯМБ', 'Двухсложный стихотворный размер с ударением на втором слоге?'], ['ЯНУС', 'Древнеримский бог с двумя лицами, обращёнными в прошлое и будущее?'], ['ЯПОНИЯ', 'Островное государство Восточной Азии, известное сакурой и синтоизмом?']]
+};
+
+const WORDS_SHORT = ['ЭВОЛЮЦИЯ', 'ГАРМОНИЯ', 'КОСМОНАВТ', 'МИРОЗДАНИЕ', 'АРХЕОЛОГИЯ', 'ФОТОСИНТЕЗ'];
+const WORDS_LONG  = ['ПРОСТРАНСТВО', 'ЦИВИЛИЗАЦИЯ', 'ТЕРМОДИНАМИКА', 'ВСЕЛЕННАЯ'];
+
+const TIME_PER_LETTER = 25;
+let settings = { len: 'short', lvl: 'medium', ord: 'seq' };
+
+function initFilters() {
+  bindGroup('len-group', 'len');
+  bindGroup('lvl-group', 'lvl');
+  bindGroup('ord-group', 'ord');
+}
+function bindGroup(id, key) {
+  const group = document.getElementById(id);
+  group.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      settings[key] = btn.dataset[key];
+      group.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+}
+
+function openRules() {
+  const inner = document.getElementById('rules-template').innerHTML;
+  const fullHtml = '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body>' + inner + '</body></html>';
+  const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, '_blank');
+  if (!win) { alert('Разрешите всплывающие окна, чтобы открыть правила.'); return; }
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+const norm = s => s.toUpperCase().trim().replace(/Ё/g, 'Е').replace(/\s+/g, '');
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function lev(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const m = [];
+  for (let i = 0; i <= b.length; i++) m[i] = [i];
+  for (let j = 0; j <= a.length; j++) m[0][j] = j;
+  for (let i = 1; i <= b.length; i++)
+    for (let j = 1; j <= a.length; j++)
+      m[i][j] = b[i-1] === a[j-1] ? m[i-1][j-1] : Math.min(m[i-1][j-1]+1, m[i][j-1]+1, m[i-1][j]+1);
+  return m[b.length][a.length];
+}
+
+function checkAnswer(userRaw, correctRaw) {
+  const u = norm(userRaw), c = norm(correctRaw);
+  if (!u) return false;
+  if (u === c) return true;
+  if (u[0] !== c[0]) return false;
+  if (Math.abs(u.length - c.length) > 1) return false;
+  return lev(u, c) <= 1;
+}
+
+let state = {};
+
+function buildPuzzle(word, bank, order) {
+  const items = [], used = new Set();
+  for (let pos = 0; pos < word.length; pos++) {
+    const letter = word[pos];
+    const pool = (bank[letter] || []).filter(([ans]) => !used.has(norm(ans)));
+    if (!pool.length) throw new Error('Нет вопроса для буквы ' + letter);
+    const [answer, question] = pick(pool);
+    used.add(norm(answer));
+    items.push({ pos, letter, question, answer });
+  }
+  if (order === 'rand') return shuffle(items);
+  return items;
+}
+
+function startRandom() {
+  const pool = settings.len === 'short' ? WORDS_SHORT : WORDS_LONG;
+  const bank = settings.lvl === 'medium' ? BANK_EASY : BANK_HARD;
+
+  const candidates = pool.filter(w => {
+    try { buildPuzzle(w, bank, 'seq'); return true; }
+    catch (e) { return false; }
+  });
+  if (!candidates.length) {
+    alert('Для выбранных настроек нет подходящего слова. Попробуйте другие фильтры.');
+    return;
+  }
+  startGame(pick(candidates), bank);
+}
+
+function startGame(word, bank) {
+  state = {
+    word, questions: buildPuzzle(word, bank, settings.ord),
+    results: new Array(word.length).fill(null),
+    userAnswers: new Array(word.length).fill(''),
+    index: 0, timeLeft: TIME_PER_LETTER * word.length,
+    timerId: null, timedOut: false,
+  };
+
+  document.getElementById('screen-intro').classList.add('hidden');
+  document.getElementById('screen-game').classList.remove('hidden');
+  document.getElementById('q-total').textContent = word.length;
+
+  renderDots();
+  renderQuestion();
+  startTimer();
+}
+
+function renderDots() {
+  const box = document.getElementById('progress-dots');
+  box.innerHTML = '';
+  for (let pos = 0; pos < state.word.length; pos++) {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    const qIndex = state.questions.findIndex(q => q.pos === pos);
+    const answered = state.questions.slice(0, state.index).some(q => q.pos === pos);
+
+    if (answered) {
+      const ok = state.results[qIndex];
+      d.textContent = ok ? state.questions[qIndex].letter : '×';
+      d.classList.add(ok ? 'done' : 'wrong');
+    } else if (qIndex === state.index) {
+      d.textContent = '·';
+      d.classList.add('active');
+    } else {
+      d.textContent = '·';
+    }
+    box.appendChild(d);
+  }
+}
+
+function renderQuestion() {
+  const q = state.questions[state.index];
+  document.getElementById('q-num').textContent = state.index + 1;
+  document.getElementById('question-text').textContent = q.question;
+  const inp = document.getElementById('answer-input');
+  inp.value = '';
+  inp.focus();
+}
+
+function handleSubmit(e) {
+  e.preventDefault();
+  const inp = document.getElementById('answer-input');
+  const raw = inp.value.trim();
+  if (!raw) return;
+
+  const q = state.questions[state.index];
+  state.results[state.index] = checkAnswer(raw, q.answer);
+  state.userAnswers[state.index] = raw;
+
+  state.index++;
+  if (state.index >= state.questions.length) finishGame();
+  else { renderDots(); renderQuestion(); }
+}
+
+function startTimer() {
+  clearInterval(state.timerId);
+  updateTimer();
+  state.timerId = setInterval(() => {
+    state.timeLeft--;
+    updateTimer();
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timerId);
+      state.timedOut = true;
+      finishGame();
+    }
+  }, 1000);
+}
+
+function updateTimer() {
+  const el = document.getElementById('timer');
+  const t = Math.max(0, state.timeLeft);
+  const m = Math.floor(t / 60);
+  const s = t % 60;
+  el.textContent = m + ':' + s.toString().padStart(2, '0');
+  el.classList.toggle('danger', t <= 30);
+}
+
+function finishGame() {
+  clearInterval(state.timerId);
+  document.getElementById('screen-game').classList.add('hidden');
+  document.getElementById('screen-result').classList.remove('hidden');
+
+  const allCorrect = !state.timedOut && state.results.every(r => r === true);
+  const title = document.getElementById('result-title');
+  title.textContent = state.timedOut ? '⏱ Время вышло!' : allCorrect ? '🏆 Победа!' : '❌ Не всё верно';
+
+  const wordEl = document.getElementById('result-word');
+  wordEl.textContent = state.word;
+  wordEl.classList.toggle('fail', !allCorrect);
+
+  const details = document.getElementById('result-details');
+  details.innerHTML = '';
+  for (let pos = 0; pos < state.word.length; pos++) {
+    const qIndex = state.questions.findIndex(q => q.pos === pos);
+    const q = state.questions[qIndex];
+    const ok = state.results[qIndex];
+    const row = document.createElement('div');
+    row.className = 'answer-row ' + (ok ? 'correct' : 'incorrect');
+    const userAns = state.userAnswers[qIndex];
+    const youLine = (!ok && userAns) ? '<span class="you">ты: ' + userAns + '</span>' : '';
+    row.innerHTML = '<span class="letter">' + q.letter + '</span><span class="q">' + q.question + '</span><span class="a">' + q.answer + youLine + '</span>';
+    details.appendChild(row);
+  }
+
+  // --- ОТПРАВКА РЕЗУЛЬТАТА НА СЕРВЕР ---
+  // Спрашиваем имя и отправляем данные в облако (D1)
+  setTimeout(() => {
+    const playerName = prompt('Игра окончена! Введите ваше имя для таблицы рекордов:', 'Аноним') || 'Аноним';
+    fetch('/api/save-result', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        playerName: playerName,
+        word: state.word,
+        score: state.results.filter(r => r === true).length,
+        result: state.timedOut ? 'timeout' : (allCorrect ? 'win' : 'loss')
+      })
+    }).catch(err => console.error('Ошибка сохранения:', err));
+  }, 300);
+}
+
+initFilters();
+</script>
+</body>
+</html>
