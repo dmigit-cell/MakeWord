@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Мой профиль</title>
+<style>
+  body { font-family: sans-serif; background: #0a0e1a; color: #fff; padding: 20px; }
+  .container { max-width: 800px; margin: 0 auto; }
+  .card { background: #1a2f5e; padding: 20px; border-radius: 16px; border: 1px solid #f5c842; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { padding: 10px; text-align: left; border-bottom: 1px solid #334; }
+  .win { color: #4ade80; } .loss { color: #ff7777; } .timeout { color: #f5c842; }
+  .btn { padding: 10px 20px; background: #f5c842; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; text-decoration: none; color: #000; display: inline-block; margin-top: 20px; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="welcome">Загрузка...</h1>
+    <div class="card">
+      <div id="content">Загрузка истории...</div>
+    </div>
+    <a href="index.html" class="btn">Играть снова</a>
+    <button class="btn" onclick="logout()" style="background:#ff7777;">Выйти</button>
+  </div>
+  <script>
+    const playerName = localStorage.getItem('player_name');
+    if (!playerName) window.location.href = 'login.html';
+
+    document.getElementById('welcome').innerText = `Личный кабинет: ${playerName}`;
+
+    async function loadHistory() {
+      try {
+        const res = await fetch(`/api/stats?player=${encodeURIComponent(playerName)}`);
+        const data = await res.json();
+        
+        if (data.length === 0) {
+          document.getElementById('content').innerHTML = '<p>Вы пока не сыграли ни одной игры.</p>';
+          return;
+        }
+
+        let html = '<table><tr><th>Слово</th><th>Счёт</th><th>Результат</th><th>Дата</th></tr>';
+        data.forEach(row => {
+          const date = new Date(row.played_at).toLocaleString('ru-RU');
+          const resClass = row.result === 'win' ? 'win' : row.result === 'timeout' ? 'timeout' : 'loss';
+          const resText = row.result === 'win' ? 'Победа' : row.result === 'timeout' ? 'Таймаут' : 'Поражение';
+          html += `<tr><td>${row.word}</td><td>${row.score}</td><td class="${resClass}">${resText}</td><td>${date}</td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById('content').innerHTML = html;
+      } catch (e) {
+        document.getElementById('content').innerText = 'Ошибка загрузки.';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('player_name');
+      localStorage.removeItem('is_admin');
+      window.location.href = 'login.html';
+    }
+
+    loadHistory();
+  </script>
+</body>
+</html>
