@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Вход · Составь Слово</title>
+<style>
+  body { font-family: sans-serif; background: #0a0e1a; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+  .box { background: #1a2f5e; padding: 40px; border-radius: 16px; text-align: center; width: 300px; border: 1px solid #f5c842; }
+  input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; text-align: center; }
+  button { width: 100%; padding: 12px; background: #f5c842; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+  .link { display: block; margin-top: 20px; color: #9baac7; text-decoration: none; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h2>Вход для игрока</h2>
+    <input type="text" id="username" placeholder="Ваше имя" maxlength="20">
+    <button onclick="login()">Войти</button>
+    <a href="admin-auth.html" class="link">Вход для админа →</a>
+  </div>
+  <script>
+    function login() {
+      const name = document.getElementById('username').value.trim();
+      if (name) {
+        localStorage.setItem('player_name', name);
+        window.location.href = 'profile.html'; // Перекидываем в кабинет
+      } else {
+        alert('Введите имя!');
+      }
+    }
+  </script>
+</body>
+</html>
