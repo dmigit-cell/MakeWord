@@ -649,11 +649,14 @@ function finishGame() {
     fetch('/api/save-result', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+        body: JSON.stringify({
         playerName: playerName,
         word: state.word,
         score: state.results.filter(r => r === true).length,
-        result: state.timedOut ? 'timeout' : (allCorrect ? 'win' : 'loss')
+        result: state.timedOut ? 'timeout' : (allCorrect ? 'win' : 'loss'),
+        wordLength: settings.len === 'short' ? 'до 8 букв' : 'больше 8 букв',
+        difficulty: settings.lvl === 'medium' ? 'Средний' : 'Сложный',
+        orderType: settings.ord === 'seq' ? 'По порядку' : 'Вперемешку'
       })
     }).catch(err => console.error('Ошибка сохранения:', err));
   }, 300);
