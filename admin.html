@@ -2,39 +2,94 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Админка · Составь Слово</title>
 <style>
-  body { font-family: sans-serif; background: #0a0e1a; color: #e8ecf5; padding: 20px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-  th, td { border: 1px solid #2a3f6e; padding: 8px 12px; text-align: left; }
-  th { background: #1a2f5e; }
-  h1 { color: #f5c842; }
-  button { padding: 10px 20px; background: #f5c842; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+  body {
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: radial-gradient(ellipse at top, #1a2f5e 0%, #0a0e1a 60%);
+    color: #e8ecf5; margin: 0; padding: 40px 20px; min-height: 100vh;
+  }
+  .container { max-width: 1000px; margin: 0 auto; }
+  h1 { 
+    font-family: Georgia, serif; text-align: center; 
+    background: linear-gradient(135deg, #ffd85c, #f5a623);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    margin-bottom: 30px;
+  }
+  .card {
+    background: linear-gradient(180deg, rgba(30,45,80,.7), rgba(15,22,40,.9));
+    border: 1px solid rgba(245,200,66,.2);
+    border-radius: 16px; padding: 24px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.4);
+    overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.1); }
+  th { color: #f5c842; font-weight: 600; background: rgba(0,0,0,.2); }
+  tr:hover td { background: rgba(255,255,255,.03); }
+  .win { color: #4ade80; font-weight: bold; }
+  .loss { color: #ff7777; font-weight: bold; }
+  .timeout { color: #f5c842; font-weight: bold; }
+  .btn {
+    display: block; width: 100%; max-width: 300px; margin: 20px auto 0;
+    padding: 14px; background: linear-gradient(135deg, #f5c842, #d4a017);
+    color: #1a1a1a; border: none; border-radius: 10px;
+    font-size: 1rem; font-weight: bold; cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.1); }
+  .loading { text-align: center; color: #9baac7; padding: 20px; }
 </style>
 </head>
 <body>
-  <h1>Админ-панель</h1>
-  <button onclick="loadStats()">Обновить данные</button>
-  <div id="table-container"></div>
+  <div class="container">
+    <h1>Таблица рекордов</h1>
+    <div class="card" id="content">
+      <div class="loading">Загрузка данных...</div>
+    </div>
+    <button class="btn" onclick="loadStats()">Обновить данные</button>
+  </div>
 
   <script>
     async function loadStats() {
-      const res = await fetch('/api/stats');
-      const data = await res.json();
-      let html = '<table><tr><th>ID</th><th>Игрок</th><th>Слово</th><th>Счёт</th><th>Результат</th><th>Время</th></tr>';
-      data.forEach(row => {
-        html += `<tr>
-          <td>${row.id}</td>
-          <td>${row.player_name}</td>
-          <td>${row.word}</td>
-          <td>${row.score}</td>
-          <td>${row.result}</td>
-          <td>${row.played_at}</td>
-        </tr>`;
-      });
-      html += '</table>';
-      document.getElementById('table-container').innerHTML = html;
+      const content = document.getElementById('content');
+      content.innerHTML = '<div class="loading">Загрузка данных...</div>';
+
+      try {
+        const res = await fetch('/api/stats');
+        if (!res.ok) throw new Error('Ошибка сервера: ' + res.status);
+        const data = await res.json();
+        
+        if (data.length === 0) {
+          content.innerHTML = '<div class="loading">Пока нет сыгранных партий.</div>';
+          return;
+        }
+
+        let html = '<table><tr><th>ID</th><th>Игрок</th><th>Слово</th><th>Счёт</th><th>Результат</th><th>Время</th></tr>';
+        data.forEach(row => {
+          // Преобразуем дату в читаемый вид
+          const date = new Date(row.played_at).toLocaleString('ru-RU');
+          const resClass = row.result === 'win' ? 'win' : row.result === 'timeout' ? 'timeout' : 'loss';
+          const resText = row.result === 'win' ? 'Победа' : row.result === 'timeout' ? 'Таймаут' : 'Поражение';
+
+          html += `<tr>
+            <td>${row.id}</td>
+            <td>${row.player_name}</td>
+            <td>${row.word}</td>
+            <td>${row.score}</td>
+            <td class="${resClass}">${resText}</td>
+            <td>${date}</td>
+          </tr>`;
+        });
+        html += '</table>';
+        content.innerHTML = html;
+      } catch (err) {
+        content.innerHTML = `<div class="loading" style="color:#ff7777">Ошибка: ${err.message}</div>`;
+      }
     }
+
+    // Загружаем данные сразу при открытии страницы
+    loadStats();
   </script>
 </body>
 </html>
