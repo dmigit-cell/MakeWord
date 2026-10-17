@@ -1,75 +1,51 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Админка · Составь Слово</title>
 <style>
-  body {
-    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
-    background: radial-gradient(ellipse at top, #1a2f5e 0%, #0a0e1a 60%);
-    color: #e8ecf5; margin: 0; padding: 40px 20px; min-height: 100vh;
-  }
-  .container { max-width: 1200px; margin: 0 auto; }
-  h1 { 
-    font-family: Georgia, serif; text-align: center; 
-    background: linear-gradient(135deg, #ffd85c, #f5a623);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    margin-bottom: 30px;
-  }
-  .card {
-    background: linear-gradient(180deg, rgba(30,45,80,.7), rgba(15,22,40,.9));
-    border: 1px solid rgba(245,200,66,.2);
-    border-radius: 16px; padding: 24px;
-    box-shadow: 0 10px 40px rgba(0,0,0,.4);
-    overflow-x: auto;
-  }
+  body { font-family: -apple-system, sans-serif; background: #0a0e1a; color: #fff; padding: 20px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .card { background: #1a2f5e; padding: 20px; border-radius: 16px; border: 1px solid #f5c842; overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.1); white-space: nowrap; }
-  th { color: #f5c842; font-weight: 600; background: rgba(0,0,0,.2); }
-  tr:hover td { background: rgba(255,255,255,.03); }
-  .win { color: #4ade80; font-weight: bold; }
-  .loss { color: #ff7777; font-weight: bold; }
-  .timeout { color: #f5c842; font-weight: bold; }
-  .btn {
-    display: block; width: 100%; max-width: 300px; margin: 20px auto 0;
-    padding: 14px; background: linear-gradient(135deg, #f5c842, #d4a017);
-    color: #1a1a1a; border: none; border-radius: 10px;
-    font-size: 1rem; font-weight: bold; cursor: pointer;
-  }
-  .btn:hover { filter: brightness(1.1); }
-  .loading { text-align: center; color: #9baac7; padding: 20px; }
+  th, td { padding: 10px; border-bottom: 1px solid #334; text-align: left; white-space: nowrap; }
+  th { color: #f5c842; }
+  .win { color: #4ade80; } .loss { color: #ff7777; } .timeout { color: #f5c842; }
+  .btn { padding: 10px 20px; background: #f5c842; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin: 10px 5px 0 0; color: #000;}
+  .del-btn { background: #ff7777; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
 </style>
 </head>
 <body>
   <div class="container">
-    <h1>Таблица рекордов</h1>
-    <div class="card" id="content">
-      <div class="loading">Загрузка данных...</div>
-    </div>
-    <button class="btn" onclick="loadStats()">Обновить данные</button>
+    <h1>Админ-панель</h1>
+    <div class="card" id="content">Загрузка...</div>
+    <button class="btn" onclick="loadStats()">Обновить</button>
+    <button class="btn" onclick="logout()" style="background:#555; color:white;">Выйти</button>
   </div>
-
   <script>
-    async function loadStats() {
-      const content = document.getElementById('content');
-      content.innerHTML = '<div class="loading">Загрузка данных...</div>';
+    // Проверка авторизации и роли
+    const userStr = localStorage.getItem('user');
+    if (!userStr) window.location.href = 'login.html';
+    const user = JSON.parse(userStr);
+    if (user.role !== 'admin') {
+      alert('Доступ только для администратора');
+      window.location.href = 'profile.html';
+    }
 
+    async function loadStats() {
       try {
-        const res = await fetch('/api/stats');
-        if (!res.ok) throw new Error('Ошибка сервера: ' + res.status);
+        const res = await fetch('/api/stats', {
+          headers: { 'X-User': user.username }
+        });
+        if (!res.ok) throw new Error('Ошибка сервера');
         const data = await res.json();
         
-        if (data.length === 0) {
-          content.innerHTML = '<div class="loading">Пока нет сыгранных партий.</div>';
-          return;
-        }
-
-        let html = '<table><tr><th>ID</th><th>Игрок</th><th>Слово</th><th>Счёт</th><th>Результат</th><th>Длина</th><th>Уровень</th><th>Порядок</th><th>Время</th></tr>';
+        let html = '<table><tr><th>ID</th><th>Игрок</th><th>Слово</th><th>Счёт</th><th>Результат</th><th>Настройки</th><th>Дата</th><th>Действие</th></tr>';
         data.forEach(row => {
           const date = new Date(row.played_at).toLocaleString('ru-RU');
           const resClass = row.result === 'win' ? 'win' : row.result === 'timeout' ? 'timeout' : 'loss';
           const resText = row.result === 'win' ? 'Победа' : row.result === 'timeout' ? 'Таймаут' : 'Поражение';
+          const settingsStr = `${row.word_length || '-'} / ${row.difficulty || '-'} / ${row.order_type || '-'}`;
 
           html += `<tr>
             <td>${row.id}</td>
@@ -77,17 +53,33 @@
             <td>${row.word}</td>
             <td>${row.score}</td>
             <td class="${resClass}">${resText}</td>
-            <td>${row.word_length || '-'}</td>
-            <td>${row.difficulty || '-'}</td>
-            <td>${row.order_type || '-'}</td>
+            <td>${settingsStr}</td>
             <td>${date}</td>
+            <td><button class="del-btn" onclick="deleteRow(${row.id})">Удалить</button></td>
           </tr>`;
         });
         html += '</table>';
-        content.innerHTML = html;
-      } catch (err) {
-        content.innerHTML = `<div class="loading" style="color:#ff7777">Ошибка: ${err.message}</div>`;
+        document.getElementById('content').innerHTML = html;
+      } catch (e) {
+        document.getElementById('content').innerText = 'Ошибка загрузки данных.';
       }
+    }
+
+    async function deleteRow(id) {
+      if (!confirm('Точно удалить эту запись?')) return;
+      try {
+        const res = await fetch(`/api/delete?id=${id}`, {
+          method: 'DELETE',
+          headers: { 'X-User': user.username }
+        });
+        if (res.ok) loadStats();
+        else alert('Ошибка удаления');
+      } catch (e) { alert('Ошибка сети'); }
+    }
+
+    function logout() {
+      localStorage.removeItem('user');
+      window.location.href = 'login.html';
     }
 
     loadStats();
