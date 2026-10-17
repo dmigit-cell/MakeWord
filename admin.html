@@ -10,7 +10,7 @@
     background: radial-gradient(ellipse at top, #1a2f5e 0%, #0a0e1a 60%);
     color: #e8ecf5; margin: 0; padding: 40px 20px; min-height: 100vh;
   }
-  .container { max-width: 1000px; margin: 0 auto; }
+  .container { max-width: 1200px; margin: 0 auto; }
   h1 { 
     font-family: Georgia, serif; text-align: center; 
     background: linear-gradient(135deg, #ffd85c, #f5a623);
@@ -24,8 +24,8 @@
     box-shadow: 0 10px 40px rgba(0,0,0,.4);
     overflow-x: auto;
   }
-  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
-  th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.1); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.1); white-space: nowrap; }
   th { color: #f5c842; font-weight: 600; background: rgba(0,0,0,.2); }
   tr:hover td { background: rgba(255,255,255,.03); }
   .win { color: #4ade80; font-weight: bold; }
@@ -65,9 +65,8 @@
           return;
         }
 
-        let html = '<table><tr><th>ID</th><th>Игрок</th><th>Слово</th><th>Счёт</th><th>Результат</th><th>Время</th></tr>';
+        let html = '<table><tr><th>ID</th><th>Игрок</th><th>Слово</th><th>Счёт</th><th>Результат</th><th>Длина</th><th>Уровень</th><th>Порядок</th><th>Время</th></tr>';
         data.forEach(row => {
-          // Преобразуем дату в читаемый вид
           const date = new Date(row.played_at).toLocaleString('ru-RU');
           const resClass = row.result === 'win' ? 'win' : row.result === 'timeout' ? 'timeout' : 'loss';
           const resText = row.result === 'win' ? 'Победа' : row.result === 'timeout' ? 'Таймаут' : 'Поражение';
@@ -78,6 +77,9 @@
             <td>${row.word}</td>
             <td>${row.score}</td>
             <td class="${resClass}">${resText}</td>
+            <td>${row.word_length || '-'}</td>
+            <td>${row.difficulty || '-'}</td>
+            <td>${row.order_type || '-'}</td>
             <td>${date}</td>
           </tr>`;
         });
@@ -88,7 +90,6 @@
       }
     }
 
-    // Загружаем данные сразу при открытии страницы
     loadStats();
   </script>
 </body>
