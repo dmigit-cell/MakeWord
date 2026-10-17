@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Админ Вход</title>
+<style>
+  body { font-family: sans-serif; background: #0a0e1a; color: #fff; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+  .box { background: #1a2f5e; padding: 40px; border-radius: 16px; text-align: center; width: 300px; border: 1px solid #f5c842; }
+  input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: none; box-sizing: border-box; }
+  button { width: 100%; padding: 12px; background: #f5c842; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+</style>
+</head>
+<body>
+  <div class="box">
+    <h2>Вход для админа</h2>
+    <input type="password" id="pass" placeholder="Пароль">
+    <button onclick="checkPass()">Войти</button>
+  </div>
+  <script>
+    function checkPass() {
+      const pass = document.getElementById('pass').value;
+      // ВАЖНО: В реальном проекте пароль должен проверяться на сервере. Здесь для простоты он в коде.
+      if (pass === 'admin123') {
+        localStorage.setItem('is_admin', 'true');
+        window.location.href = 'admin.html'; // Перекидываем в админку
+      } else {
+        alert('Неверный пароль!');
+      }
+    }
+  </script>
+</body>
+</html>
